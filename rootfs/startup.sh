@@ -23,16 +23,9 @@ fi
 USER=${USER:-root}
 HOME=/root
 if [ "$USER" != "root" ]; then
-    echo "* enable custom user: $USER"
-    useradd --create-home --shell /bin/bash --user-group --groups adm,sudo $USER
-    if [ -z "$PASSWORD" ]; then
-        echo "  set default password to \"ubuntu\""
-        PASSWORD=ubuntu
-    fi
     HOME=/home/$USER
-    echo "$USER:$PASSWORD" | chpasswd
-    cp -r /root/{.config,.gtkrc-2.0,.asoundrc} ${HOME}
-    chown -R $USER:$USER ${HOME}
+    cp -r /root/{.gtkrc-2.0,.asoundrc} ${HOME}
+    chown -R $USER:$USER ${HOME}/{.gtkrc-2.0,.asoundrc}
     [ -d "/dev/snd" ] && chgrp -R adm /dev/snd
 fi
 sed -i -e "s|%USER%|$USER|" -e "s|%HOME%|$HOME|" /etc/supervisor/conf.d/supervisord.conf
@@ -41,7 +34,7 @@ sed -i -e "s|%USER%|$USER|" -e "s|%HOME%|$HOME|" /etc/supervisor/conf.d/supervis
 if [ ! -x "$HOME/.config/pcmanfm/LXDE/" ]; then
     mkdir -p $HOME/.config/pcmanfm/LXDE/
     ln -sf /usr/local/share/doro-lxde-wallpapers/desktop-items-0.conf $HOME/.config/pcmanfm/LXDE/
-    chown -R $USER:$USER $HOME
+    chown -R $USER:$USER $HOME/.config
 fi
 
 # nginx workers
@@ -66,6 +59,13 @@ if [ -n "$RELATIVE_URL_ROOT" ]; then
     echo "* enable RELATIVE_URL_ROOT: $RELATIVE_URL_ROOT"
 	sed -i 's|#_RELATIVE_URL_ROOT_||' /etc/nginx/sites-enabled/default
 	sed -i 's|_RELATIVE_URL_ROOT_|'$RELATIVE_URL_ROOT'|' /etc/nginx/sites-enabled/default
+fi
+
+# Use zsh
+if [ "$USE_SHELL" = "zsh" ]; then
+    echo "* enable zsh"
+    chsh -s /usr/bin/zsh $USER
+    export SHELL=/usr/bin/zsh
 fi
 
 # clearup

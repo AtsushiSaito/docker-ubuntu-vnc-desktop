@@ -78,6 +78,18 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/cache/apt/* /tmp/a.txt /tmp/b.txt
 
+################################################################################
+# Add User
+################################################################################
+RUN apt-get update -q \
+    && apt-get upgrade -y \
+    && apt-get install -y \
+        gosu bash-completion zsh git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd --home-dir /home/ubuntu --shell /bin/bash --create-home --user-group --groups adm,sudo ubuntu
+RUN echo "ubuntu:ubuntu" | /usr/sbin/chpasswd
+ENV USER ubuntu
 
 ################################################################################
 # builder
@@ -114,7 +126,12 @@ RUN sed -i 's#app/locale/#novnc/app/locale/#' /src/web/dist/static/novnc/app/ui.
 # merge
 ################################################################################
 FROM system
-LABEL maintainer="fcwu.tw@gmail.com"
+LABEL maintainer="atsushisaito2357@gmail.com"
+
+# zsh setup
+COPY assets/prezto.sh /tmp/prezto.sh
+RUN gosu ubuntu zsh /tmp/prezto.sh
+COPY assets/.zshrc /home/$USER/.zshrc
 
 COPY --from=builder /src/web/dist/ /usr/local/lib/web/frontend/
 COPY rootfs /

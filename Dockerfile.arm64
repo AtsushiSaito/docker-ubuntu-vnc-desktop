@@ -73,6 +73,18 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/cache/apt/* /tmp/a.txt /tmp/b.txt
 
+################################################################################
+# Add User
+################################################################################
+RUN apt-get update -q \
+    && apt-get upgrade -y \
+    && apt-get install -y \
+        gosu bash-completion zsh git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd --home-dir /home/ubuntu --shell /bin/bash --create-home --user-group --groups adm,sudo ubuntu
+RUN echo "ubuntu:ubuntu" | /usr/sbin/chpasswd
+ENV USER ubuntu
 
 ################################################################################
 # builder
@@ -118,6 +130,11 @@ COPY rootfs /
 RUN ln -sf /usr/local/lib/web/frontend/static/websockify" "/usr/local/lib/web/frontend/static/novnc/utils/websockify && chmod +x /usr/local/lib/web/frontend/static/websockify/run
 RUN ln -sf /usr/local/lib/web/frontend/static/websockify /usr/local/lib/web/frontend/static/novnc/utils/websockify && \
 	chmod +x /usr/local/lib/web/frontend/static/websockify/run
+
+# zsh setup
+COPY assets/prezto.sh /tmp/prezto.sh
+RUN gosu ubuntu zsh /tmp/prezto.sh
+COPY assets/.zshrc /home/$USER/.zshrc
 
 EXPOSE 80
 WORKDIR /root
